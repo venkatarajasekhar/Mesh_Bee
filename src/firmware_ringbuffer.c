@@ -36,6 +36,7 @@ int init_ringbuffer(struct ringbuffer *r, void *buff, uint32 size)
     return 0;
     }
     else{
+         DBG_vPrintf(TRACE_SLEEP, "Failed: init_ringbuffer\r\n");
     r->buf = NULL;
     r->size = 0;
     clear_ringbuffer(r);
@@ -53,7 +54,10 @@ void clear_ringbuffer(struct ringbuffer *r)
     if(ringBuf){
     r->begin = 0;
     r->end = 0;
-}
+    }
+    else{
+        DBG_vPrintf(TRACE_SLEEP, "Failed: clear_ringbuffer\r\n");
+    }
 return;
 }
 uint32 ringbuffer_free_space(struct ringbuffer *r)
@@ -66,6 +70,7 @@ uint32 ringbuffer_free_space(struct ringbuffer *r)
     return r->size - (r->end - r->begin) - 1;
     else return r->begin - r->end - 1;
 }
+DBG_vPrintf(TRACE_SLEEP, "Failed: ringbuffer_free_space\r\n");
 return 0;
 }
 uint32 ringbuffer_data_size(struct ringbuffer *r)
@@ -77,6 +82,7 @@ uint32 ringbuffer_data_size(struct ringbuffer *r)
     if (r->begin <= r->end) return r->end - r->begin + 1;
     else return r->size - (r->begin - r->end) + 1;
 }
+DBG_vPrintf(TRACE_SLEEP, "Failed: ringbuffer_data_size\r\n");
 return 0;
 }
 
@@ -120,6 +126,7 @@ void ringbuffer_push(struct ringbuffer *r, const void *data, uint32 size)
         r->end += size - 1;
     }
 }
+  DBG_vPrintf(TRACE_SLEEP, "Failed: ringbuffer_push\r\n"); 
   return;
 }
 //get buffer data : out stack
@@ -155,6 +162,7 @@ void ringbuffer_pop(struct ringbuffer *r, void *data, uint32 size)
 
     if (need_clear) clear_ringbuffer(r);
 }
+DBG_vPrintf(TRACE_SLEEP, "Failed: ringbuffer_pop\r\n"); 
 return;
 }
 /* read without pop out */
@@ -180,5 +188,6 @@ void ringbuffer_read(struct ringbuffer *r, void *data, uint32 size)
         }
     }
 }
+DBG_vPrintf(TRACE_SLEEP, "Failed: ringbuffer_read\r\n"); 
 return;
 }
