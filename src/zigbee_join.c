@@ -116,19 +116,23 @@ int API_RescanNetwork_CallBack(tsApiSpec *inputApiSpec, tsApiSpec *retApiSpec, u
 {
     int ret = AT_reScanNetwork(regAddr);
     int resp = (ret == OK) ? AT_OK:AT_ERR;
+    tsLocalAtResp localAtResp;
+    tsRemoteAtResp remoteAtResp;
+    int len;
 
-    if (API_LOCAL_AT_REQ == inputApiSpec->teApiIdentifier)
+   // if (API_LOCAL_AT_REQ == inputApiSpec->teApiIdentifier)
+   if (inputApiSpec->teApiIdentifier == API_LOCAL_AT_REQ )
     {
-        tsLocalAtResp localAtResp;
-        int len = assembleLocalAtResp(&localAtResp,
+        len = assembleLocalAtResp(&localAtResp,
                                       inputApiSpec->payload.localAtReq.frameId,
                                       inputApiSpec->payload.localAtReq.atCmdId,
                                       resp, (uint8 *)&resp, 2);
         assembleApiSpec(retApiSpec, API_LOCAL_AT_RESP, (uint8 *)&localAtResp, len);
-    } else if (API_REMOTE_AT_REQ == inputApiSpec->teApiIdentifier)
+    } //else if (API_REMOTE_AT_REQ == inputApiSpec->teApiIdentifier)
+    else if (inputApiSpec->teApiIdentifier == API_REMOTE_AT_REQ)
     {
-        tsRemoteAtResp remoteAtResp;
-        int len = assembleRemoteAtResp(&remoteAtResp,
+        
+        len = assembleRemoteAtResp(&remoteAtResp,
                                        inputApiSpec->payload.remoteAtReq.frameId,
                                        inputApiSpec->payload.remoteAtReq.atCmdId,
                                        resp, (uint8 *)&resp, 2, inputApiSpec->payload.remoteAtReq.unicastAddr);
@@ -152,7 +156,8 @@ PUBLIC void vHandleNetworkLeave(ZPS_tsAfEvent sStackEvent)
 {
     uint8 endUp = 0;
 
-    if (ZPS_EVENT_NONE != sStackEvent.eType)
+    //if (ZPS_EVENT_NONE != sStackEvent.eType)
+    if (sStackEvent.eType != ZPS_EVENT_NONE )
     {
         switch (sStackEvent.eType)
         {
@@ -199,8 +204,12 @@ PUBLIC void vHandleNetworkLeave(ZPS_tsAfEvent sStackEvent)
  ****************************************************************************/
 int AT_joinNetworkWithIndex(uint16 *regAddr)
 {
-    uint16 idx = *regAddr;
-
+    uint16 *JoinNWKregAddr = regAddr;
+    uint16 idx;
+    char tmp[90];
+    int len;
+    if(JoinNWKregAddr){
+    	idx = *regAddr ;
     if (idx > u8DiscovedNWKListCount || u8DiscovedNWKListCount == 0)
     {
         DBG_vPrintf(TRACE_JOIN, "Illegal index!\r\n");
@@ -208,9 +217,11 @@ int AT_joinNetworkWithIndex(uint16 *regAddr)
     }
 
     u8DiscovedNWKJoinCount = idx;
-
-    char tmp[90];
-    int len;
+    }
+    else{
+    	 DBG_vPrintf(TRACE_JOIN, "Failed: NWKRegAddress!\r\n");
+    }
+    
 
     if (g_sDevice.eState > E_NETWORK_JOINING)
     {
@@ -256,6 +267,9 @@ int AT_joinNetworkWithIndex(uint16 *regAddr)
 
 int API_JoinNetworkWithIndex_CallBack(tsApiSpec *inputApiSpec, tsApiSpec *retApiSpec, uint16 *regAddr)
 {
+    int result = 0;
+    char tmp[90];
+    int len;
     //save the register
     if (inputApiSpec->payload.localAtReq.value[0] != 0)
     {
@@ -263,9 +277,7 @@ int API_JoinNetworkWithIndex_CallBack(tsApiSpec *inputApiSpec, tsApiSpec *retApi
         PDM_vSaveRecord(&g_sDevicePDDesc);
     }
 
-    int result = 0;
-    char tmp[90];
-    int len;
+    
     do
     {
         uint16 idx = *regAddr;
@@ -397,7 +409,8 @@ PUBLIC void vHandleStartupEvent(void)
 PUBLIC void vHandleNetworkDiscoveryEvent(ZPS_tsAfEvent sStackEvent)
 {
     /* wait for node to discover networks... */
-    if (ZPS_EVENT_NONE != sStackEvent.eType)
+   // if (ZPS_EVENT_NONE != sStackEvent.eType)
+   if (sStackEvent.eType != ZPS_EVENT_NONE )
     {
         switch (sStackEvent.eType)
         {
@@ -406,7 +419,8 @@ PUBLIC void vHandleNetworkDiscoveryEvent(ZPS_tsAfEvent sStackEvent)
 
             DBG_vPrintf(TRACE_JOIN, "Discovery Complete\r\n");
 
-            if ((ZPS_E_SUCCESS != sStackEvent.uEvent.sNwkDiscoveryEvent.eStatus))
+           // if ((ZPS_E_SUCCESS != sStackEvent.uEvent.sNwkDiscoveryEvent.eStatus))
+           if ((sStackEvent.uEvent.sNwkDiscoveryEvent.eStatus != ZPS_E_SUCCESS))
             {
                 DBG_vPrintf(TRACE_JOIN, "Discovery ERR: 0x%x, \r\n", sStackEvent.uEvent.sNwkDiscoveryEvent.eStatus);
                 vStartStopTimer(APP_JoinTimer, APP_TIME_MS(1000), E_NETWORK_STARTUP);
@@ -527,7 +541,7 @@ PUBLIC void vHandleNetworkJoinEvent(ZPS_tsAfEvent sStackEvent)
  ****************************************************************************/
 PUBLIC void vJoinedNetwork(ZPS_tsAfEvent sStackEvent)
 {
-    ZPS_tsNwkNib *thisNib;
+    ZPS_tsNwkNib *thisNib = NULL;
 
     thisNib = ZPS_psNwkNibGetHandle(ZPS_pvAplZdoGetNwkHandle());
 
