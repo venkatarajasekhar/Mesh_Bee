@@ -237,8 +237,11 @@ void CMI_vPushData(void *data, int len)
  ****************************************************************************/
 void CMI_vTxData(void *data, int len)
 {
+	void *TXdata = data;
 	bool bValid = FALSE;
 	tsApiSpec apiSpec;
+	tsNwkTopoResp nwkTopoResp;
+	uint32 free_cnt;
     memset(&apiSpec, 0, sizeof(tsApiSpec));
 
     switch(g_sDevice.eMode)
@@ -246,10 +249,12 @@ void CMI_vTxData(void *data, int len)
         /* AT mode */
         case E_MODE_AT:
         /* print */
+                if(TXdata){
         	u16DecodeApiSpec(data, len, &apiSpec, &bValid);
-        	if(API_TOPO_RESP == apiSpec.teApiIdentifier)
+        //	if(API_TOPO_RESP == apiSpec.teApiIdentifier)
+                if(apiSpec.teApiIdentifier == API_TOPO_RESP)
         	{
-                tsNwkTopoResp nwkTopoResp;
+                
                 memset(&nwkTopoResp, 0, sizeof(tsNwkTopoResp));
                 nwkTopoResp = apiSpec.payload.nwkTopoResp;
 
@@ -285,7 +290,7 @@ void CMI_vTxData(void *data, int len)
         /* MCU mode */
         case E_MODE_MCU:
         	OS_eEnterCriticalSection(mutexAirPort);
-        	uint32 free_cnt = ringbuffer_free_space(&rb_air_aups);
+        	free_cnt = ringbuffer_free_space(&rb_air_aups);
         	OS_eExitCriticalSection(mutexAirPort);
 
         	/* if free size < len, discard it */
@@ -305,6 +310,7 @@ void CMI_vTxData(void *data, int len)
 
 int CMI_vTxData_bak2014(void *data, int len)
 {
+	uint32 free_cnt;
 #ifdef FW_MODE_MASTER
 	/* At Data mode,data send to UART1 directly */
 	if(E_MODE_DATA == g_sDevice.eMode)
@@ -314,7 +320,7 @@ int CMI_vTxData_bak2014(void *data, int len)
 	else
 	{
 	    OS_eEnterCriticalSection(mutexAirPort);
-        uint32 free_cnt = ringbuffer_free_space(&rb_air_aups);
+            free_cnt = ringbuffer_free_space(&rb_air_aups);
 	    OS_eExitCriticalSection(mutexAirPort);
 
 	    /*
