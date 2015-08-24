@@ -169,13 +169,15 @@ PRIVATE void vHandleCOOStartupEvent(ZPS_tsAfEvent sStackEvent)
  ****************************************************************************/
 PRIVATE void vHandleNetworkFormationEvent(ZPS_tsAfEvent sStackEvent)
 {
-    void *thisNet;
-    ZPS_tsNwkNib *thisNib;
+    void *thisNet =NULL;
+    ZPS_tsNwkNib *thisNib = NULL;
 
     /*wait for network stack to start up as a coordinator */
-    if (ZPS_EVENT_NONE != sStackEvent.eType)
+    //if (ZPS_EVENT_NONE != sStackEvent.eType)
+    if (sStackEvent.eType!= ZPS_EVENT_NONE)
     {
-        if (ZPS_EVENT_NWK_STARTED == sStackEvent.eType)
+       // if (ZPS_EVENT_NWK_STARTED == sStackEvent.eType)
+        if (sStackEvent.eType == ZPS_EVENT_NWK_STARTED)
         {
             DBG_vPrintf(TRACE_NODE, "Network Started\r\n");
 
@@ -196,6 +198,7 @@ PRIVATE void vHandleNetworkFormationEvent(ZPS_tsAfEvent sStackEvent)
             DBG_vPrintf(TRACE_NODE, "unexpected Event in E_NETWORK_STARTUP\r\n");
         }
     }
+    return;
 }
 
 
@@ -324,7 +327,7 @@ PUBLIC void vHandleRunningEvent(ZPS_tsAfEvent sStackEvent)
         DBG_vPrintf(TRACE_NODE, "Unhandled event in vHandleRunningEvent: %x \r\n", sStackEvent.eType);
         break;
     }
-
+   return;
 }
 
 /****************************************************************************
@@ -619,6 +622,8 @@ OS_TASK(APP_RadioRecal)
  ****************************************************************************/
 PUBLIC void initDeviceDefault(tsDevice *dev)
 {
+    tsDevice *device = dev;
+    if(device){
     dev->eState = E_NETWORK_CONFIG;
     dev->eSubState = E_SUB_NONE;
     dev->eMode  = E_MODE_DATA;
@@ -643,6 +648,9 @@ PUBLIC void initDeviceDefault(tsDevice *dev)
     dev->config.baudRateUart1 = E_AHI_UART_RATE_115200;
     dev->config.powerUpAction = 1;
     dev->config.reqPeriodMs   = 1000;
+}
+DBG_vPrintf(TRACE_NODE, "Failed:init the default value for tsDevice global config");
+return;
 }
 
 /****************************************************************************
@@ -683,6 +691,7 @@ PUBLIC void deleteStackPDM()
  ****************************************************************************/
 PUBLIC void node_vInitialise(void)
 {
+    char *mode = "";
     PDM_eLoadRecord(&g_sDevicePDDesc, REC_ID1, &g_sDevice, sizeof(g_sDevice), FALSE);
     if (g_sDevice.magic != PDM_REC_MAGIC || g_sDevice.len != sizeof(g_sDevice))
     {
@@ -709,7 +718,7 @@ PUBLIC void node_vInitialise(void)
     DBG_vPrintf(TRACE_NODE, "PDM Occupancy: %d sectors\r\n", u8PDM_GetFileSystemOccupancy());
 
     /* print working mode */
-    char *mode = "";
+    
     switch(g_sDevice.eMode)
     {
       case E_MODE_API: mode = "API";break;
