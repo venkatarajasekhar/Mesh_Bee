@@ -377,7 +377,7 @@ typedef struct
 }AT_Command_ApiMode_t;
 
 /* return code */
-enum ErrorCode
+typedef enum 
 {
     OK,
     ERR,
@@ -386,7 +386,7 @@ enum ErrorCode
     OUTRNG,
     OKREBOOT,
     ERRNCMD
-};
+}ErrorCode;
 
 /****************************************************************************/
 /***        Global Function Prototypes                                    ***/
