@@ -30,7 +30,7 @@
 /****************************************************************************/
 /***        Macro Definitions                                             ***/
 /****************************************************************************/
-
+#define MAX_SINGLE_CHANNEL_NETWORKS        8
 /****************************************************************************/
 /***        Type Definitions                                              ***/
 /****************************************************************************/
@@ -58,7 +58,7 @@ int API_RescanNetwork_CallBack(tsApiSpec *inputApiSpec, tsApiSpec *retApiSpec, u
 int API_JoinNetworkWithIndex_CallBack(tsApiSpec *inputApiSpec, tsApiSpec *retApiSpec, uint16 *regAddr);
 int API_listNetworkScaned_CallBack(tsApiSpec *reqApiSpec, tsApiSpec *respApiSpec, uint16 *regAddr);
 
-#define MAX_SINGLE_CHANNEL_NETWORKS        8
+
 
 /****************************************************************************/
 /***        External Variables                                            ***/
