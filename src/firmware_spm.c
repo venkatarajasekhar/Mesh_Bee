@@ -139,7 +139,11 @@ OS_TASK(APP_taskHandleUartRx)
     uint32 dataCnt = 0;
     uint32 popCnt = 0;
     uint32 size = 0;
+    int len = popCnt;
+    bool found = FALSE;
     tsApiSpec apiSpec;
+    int ret;
+    char *resp = NULL;
 
     /* calculate data size of the ring buffer */
     OS_eEnterCriticalSection(mutexRxRb);
@@ -161,8 +165,7 @@ OS_TASK(APP_taskHandleUartRx)
         	 ringbuffer_read(&rb_rx_spm, tmp, popCnt);
         	 OS_eExitCriticalSection(mutexRxRb);
 
-        	 int len = popCnt;
-        	 bool found = FALSE;
+        	 
         	 while (len--)
         	 {
         		 if (tmp[len] == '\r' || tmp[len] == '\n')
@@ -175,9 +178,9 @@ OS_TASK(APP_taskHandleUartRx)
         	 }
 
         	 /* Process AT command */
-        	 int ret = API_i32AtCmdProc(tmp, popCnt);
+        	 ret = API_i32AtCmdProc(tmp, popCnt);
 
-        	 char *resp;
+        	 
         	 if (ret == OK)
         		 resp = "OK\r\n\r\n";
         	 if (ret == ERR)
