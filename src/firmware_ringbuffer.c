@@ -28,13 +28,20 @@
 
 int init_ringbuffer(struct ringbuffer *r, void *buff, uint32 size)
 {
+    struct ringbuffer *ringBuf = r;
+    if(ringBuf){
     r->buf = buff;
     r->size = size;
     clear_ringbuffer(r);
-
     return 0;
+    }
+    else{
+    r->buf = NULL;
+    r->size = 0;
+    clear_ringbuffer(r);
+     return 0;
 }
-
+}
 void free_ringbuffer(struct ringbuffer *r)
 {
     //free(r->buf);
@@ -42,29 +49,44 @@ void free_ringbuffer(struct ringbuffer *r)
 
 void clear_ringbuffer(struct ringbuffer *r)
 {
+    struct ringbuffer *ringBuf = r;
+    if(ringBuf){
     r->begin = 0;
     r->end = 0;
 }
-
+return;
+}
 uint32 ringbuffer_free_space(struct ringbuffer *r)
 {
-    if (r->begin == 0 && r->end == 0) return r->size;
-
-    if (r->begin <= r->end) return r->size - (r->end - r->begin) - 1;
+    struct ringbuffer *ringBuf = r;
+    if(ringBuf){
+    if (r->begin == 0 && r->end == 0) 
+    return r->size;
+    if (r->begin <= r->end) 
+    return r->size - (r->end - r->begin) - 1;
     else return r->begin - r->end - 1;
 }
-
+return 0;
+}
 uint32 ringbuffer_data_size(struct ringbuffer *r)
 {
+    struct ringbuffer *ringBuf = r;
+    if(ringBuf){
     if (r->begin == 0 && r->end == 0) return 0;
 
     if (r->begin <= r->end) return r->end - r->begin + 1;
     else return r->size - (r->begin - r->end) + 1;
 }
+return 0;
+}
 
 //push data into buffer : in stack
 void ringbuffer_push(struct ringbuffer *r, const void *data, uint32 size)
 {
+    struct ringbuffer *ringBuf = r;
+    void *BufData = data;
+    uint32 s = r->buf + r->size - r->end;
+    if((ringBuf) && (BufData)){
     if (ringbuffer_free_space(r) < size) return;
 
     if (r->begin == 0 && r->end == 0)
@@ -86,7 +108,7 @@ void ringbuffer_push(struct ringbuffer *r, const void *data, uint32 size)
         } else
         {
             /* make a cut */
-            uint32 s = r->buf + r->size - r->end;
+            
             memcpy(r->end, data, s);
             size -= s;
             memcpy(r->buf, (char *)data + s, size);
@@ -98,13 +120,18 @@ void ringbuffer_push(struct ringbuffer *r, const void *data, uint32 size)
         r->end += size - 1;
     }
 }
-
+  return;
+}
 //get buffer data : out stack
 void ringbuffer_pop(struct ringbuffer *r, void *data, uint32 size)
 {
-    if (ringbuffer_data_size(r) < size) return;
-
     int need_clear = 0;
+    uint32 s = r->buf + r->size - r->begin;
+    struct ringbuffer *ringBuf = r;
+    void *BufData = data;
+    if((ringBuf) && (BufData)){
+    
+    if (ringbuffer_data_size(r) < size) return;
     if (ringbuffer_data_size(r) == size) need_clear = 1;
 
     if (r->begin < r->end)
@@ -119,7 +146,6 @@ void ringbuffer_pop(struct ringbuffer *r, void *data, uint32 size)
             r->begin += size;
         } else
         {
-            uint32 s = r->buf + r->size - r->begin;
             if (data) memcpy(data, r->begin, s);
             size -= s;
             if (data) memcpy((char *)data + s, r->buf, size);
@@ -129,10 +155,16 @@ void ringbuffer_pop(struct ringbuffer *r, void *data, uint32 size)
 
     if (need_clear) clear_ringbuffer(r);
 }
-
+return;
+}
 /* read without pop out */
 void ringbuffer_read(struct ringbuffer *r, void *data, uint32 size)
 {
+    struct ringbuffer *ringBuf = r;
+    void *BufData = data;
+    uint32 s = r->buf + r->size - r->begin;
+    if((ringBuf) && (BufData)){
+        
     if (ringbuffer_data_size(r) < size) return;
 
     if (r->begin < r->end) memcpy(data, r->begin, size);
@@ -141,10 +173,12 @@ void ringbuffer_read(struct ringbuffer *r, void *data, uint32 size)
         if ((uint32)(r->buf + r->size - r->begin) >= size) memcpy(data, r->begin, size);
         else
         {
-            uint32 s = r->buf + r->size - r->begin;
+            
             memcpy(data, r->begin, s);
             size -= s;
             memcpy((char *)data + s, r->buf, size);
         }
     }
+}
+return;
 }
