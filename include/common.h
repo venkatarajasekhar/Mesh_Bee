@@ -132,11 +132,11 @@ typedef enum
     E_MODE_MCU      //Arduino-ful MCU
 }teMode;
 
-enum teTxMode
+typedef enum 
 {
     BROADCAST,      //send to all of the nodes in the network
     UNICAST         //send to specified node
-};
+}teTxMode;
 
 typedef struct
 {
