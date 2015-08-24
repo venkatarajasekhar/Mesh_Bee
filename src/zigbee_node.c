@@ -479,7 +479,8 @@ OS_TASK(APP_taskNWK)
 OS_TASK(APP_InitiateRejoin)
 {
     ZPS_teStatus eStatus = ZPS_eAplZdoRejoinNetwork();                            // Tell the stack to initiate a rejoin
-    if (ZPS_E_SUCCESS != eStatus)
+   // if (ZPS_E_SUCCESS != eStatus)
+   if (eStatus != ZPS_E_SUCCESS)
     {
         /* Stack not currently able to initiate
          * a rejoin, back off and try again later */
@@ -510,6 +511,11 @@ OS_TASK(APP_AgeOutChildren)
 #ifndef TARGET_END
     ZPS_tsNwkNib *thisNib = ZPS_psNwkNibGetHandle(ZPS_pvAplZdoGetNwkHandle());
     uint8 i;
+    PDUM_thAPduInstance hAPduInst;
+     uint8 u8TransactionSequenceNumber;
+    /* Broadcast to all Rx-On-When-Idle devices */
+    ZPS_tuAddress uAddress;
+    ZPS_tsAplZdpNwkAddrReq sAplZdpNwkAddrReq;
 
     for (i = u8ChildOfInterest; i < thisNib->sTblSize.u16NtActv; i++)
     {
@@ -519,7 +525,7 @@ OS_TASK(APP_AgeOutChildren)
              * If anyone responds we know to age out the child */
             u8ChildOfInterest = i;
 
-            PDUM_thAPduInstance hAPduInst;
+           
             hAPduInst = PDUM_hAPduAllocateAPduInstance(apduZDP);
 
             if (hAPduInst == PDUM_INVALID_HANDLE)
@@ -527,13 +533,7 @@ OS_TASK(APP_AgeOutChildren)
                 DBG_vPrintf(TRACE_NODE, "IEEE Address Request - PDUM_INVALID_HANDLE\r\n");
             } else
             {
-                uint8 u8TransactionSequenceNumber;
-
-                /* Broadcast to all Rx-On-When-Idle devices */
-                ZPS_tuAddress uAddress;
                 uAddress.u16Addr = 0xFFFD;
-
-                ZPS_tsAplZdpNwkAddrReq sAplZdpNwkAddrReq;
                 sAplZdpNwkAddrReq.u64IeeeAddr = thisNib->sTbl.psNtActv[u8ChildOfInterest].u64ExtAddr;
                 sAplZdpNwkAddrReq.u8RequestType = 0;
 
