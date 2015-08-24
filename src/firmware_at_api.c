@@ -253,14 +253,17 @@ uint8 calCheckSum(uint8 *in, int len)
  ****************************************************************************/
 uint16 assembleApiFrame(tsApiFrame *frm, teFrameType type, uint8 *payload, uint16 payloadLen)
 {
+    tsApiFrame *APIframe = frm;
+    uint8 *APIData = payload;
+    if((APIframe) &&(APIData)){
     frm->preamble   = PREAMBLE;
     frm->frameType  = type;
     frm->payloadLen = payloadLen;
     memcpy(frm->payload.data, payload, payloadLen);
-
     frm->checksum   = calCheckSum((uint8 * )frm, 4 + payloadLen);
-
-    return 4 + payloadLen + 1;
+    return (4 + payloadLen + 1);
+    }
+    return 0;
 }
 
 /****************************************************************************
@@ -447,20 +450,22 @@ int getHexParamData(uint8 *buf, int len, uint16 *result, int size)
 {
     uint16 value = 0;
     char ar[17] = "0123456789abcdef";
-
+    char tmp[5];
+    char *low = strlwr(tmp);
+     int len2 = MIN(size, (len - ATHEADERLEN));
+    int i = 0;
     // we start to read at pos 5 as 0-1 = AT and 2-3 = CMD
     if (len == ATHEADERLEN) return NOTHING;
     if (len < ATHEADERLEN || size > 4) return ERR;
 
 
-    char tmp[5];
+    
     memcpy(tmp, buf + ATHEADERLEN, size);
     tmp[size] = '\0';
 
-    char *low = strlwr(tmp);
+    
 
-    int len2 = MIN(size, (len - ATHEADERLEN));
-    int i = 0;
+   
     for (i = 0; i < len2; i++)
     {
         char *pos = strchr(ar, *(low + i));
@@ -1217,7 +1222,7 @@ int AT_i32QueryOnChipTemper(uint16 *regAddr)
   int16 i16ChipTemperature = i16HAL_GetChipTemp(adSampleVal);
 
   /*
-	If the JN516x device operates at temperatures in excess of 90¡ãC, it may be necessary
+	If the JN516x device operates at temperatures in excess of 90Â¡Ã£C, it may be necessary
 	to call this function to maintain the frequ ency tolerance of the clock to within the
 	40ppm limit specified by the IEEE 802.15. 4 standard.
   */
@@ -1325,7 +1330,7 @@ int API_QueryOnChipTemper_CallBack(tsApiSpec *reqApiSpec, tsApiSpec *respApiSpec
 	int16 i16ChipTemperature = i16HAL_GetChipTemp(adSampleVal);
 
 	/*
-	  If the JN516x device operates at temperatures in excess of 90¡ãC, it may be necessary
+	  If the JN516x device operates at temperatures in excess of 90Â¡Ã£C, it may be necessary
 	  to call this function to maintain the frequ ency tolerance of the clock to within the
 	  40ppm limit specified by the IEEE 802.15. 4 standard.
 	*/
