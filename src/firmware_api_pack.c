@@ -45,7 +45,7 @@ extern uint8 calCheckSum(uint8 *in, int len);
 uint16 u16DecodeApiSpec(uint8 *buffer, int len, tsApiSpec *spec, bool *valid)
 {
 	uint8 *ptr = buffer;
-	while (*ptr != API_START_DELIMITER && len-- > 0) ptr++;
+	while (((*ptr != API_START_DELIMITER) && (len-- ) )> 0) ptr++;
 	if (len < 4)
 	{
 	    *valid = FALSE;
@@ -134,7 +134,7 @@ void PCK_vApiSpecDataFrame(tsApiSpec *apiSpec, uint8 frameId, uint8 option, uint
     txDataPacket.dataLen = min_cnt;
     txDataPacket.unicastAddr = unicastAddr;
 
-    memcpy(txDataPacket.data, data, min_cnt);
+    memcpy(&(txDataPacket.data), data, min_cnt);
 
     apiSpec->startDelimiter = API_START_DELIMITER;
     apiSpec->length = sizeof(tsTxDataPacket);
