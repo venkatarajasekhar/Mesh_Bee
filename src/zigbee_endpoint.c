@@ -82,16 +82,18 @@ extern PDM_tsRecordDescriptor g_sDevicePDDesc;
 OS_TASK(APP_taskOTAReq)
 {
 #ifdef OTA_CLIENT
+        uint8 tmp[sizeof(tsApiSpec)] = {0};
+	tsApiSpec apiSpec;
+	tsOtaReq otaReq;
+        int size;
 	if (g_sDevice.otaDownloading < 1 || g_sDevice.eState <= E_NETWORK_JOINING)
 		return;
 
-	uint8 tmp[sizeof(tsApiSpec)] = {0};
-	tsApiSpec apiSpec;
 	memset(&apiSpec, 0, sizeof(tsApiSpec));
 
-	if(1 == g_sDevice.otaDownloading)
+	//if(1 == g_sDevice.otaDownloading)
+	f(g_sDevice.otaDownloading == 1)
 	{
-        tsOtaReq otaReq;
         memset(&otaReq, 0, sizeof(tsOtaReq));
 
         otaReq.blockIdx = g_sDevice.otaCurBlock;
@@ -114,13 +116,14 @@ OS_TASK(APP_taskOTAReq)
 	    apiSpec.checkSum = calCheckSum((uint8*)&otaReq, apiSpec.length);
 
 	   /* send through AirPort */
-	   int size = i32CopyApiSpec(&apiSpec, tmp);
+	   size = i32CopyApiSpec(&apiSpec, tmp);
 	   API_bSendToAirPort(UNICAST, g_sDevice.otaSvrAddr16, tmp, size);
 
 	   /* Require per otaReqPeriod */
 	   vResetATimer(APP_OTAReqTimer, APP_TIME_MS(g_sDevice.otaReqPeriod));
 	}
-	else if(2 == g_sDevice.otaDownloading)
+//	else if(2 == g_sDevice.otaDownloading)
+        else if(g_sDevice.otaDownloading == 2)
 	{
 		/* package apiSpec */
 		apiSpec.startDelimiter = API_START_DELIMITER;
@@ -130,7 +133,7 @@ OS_TASK(APP_taskOTAReq)
 		apiSpec.checkSum = 0;
 
 		/* send through AirPort */
-		int size = i32CopyApiSpec(&apiSpec, tmp);
+		size = i32CopyApiSpec(&apiSpec, tmp);
 		API_bSendToAirPort(UNICAST, g_sDevice.otaSvrAddr16, tmp, size);
 
 		vResetATimer(APP_OTAReqTimer, APP_TIME_MS(1000));
@@ -190,14 +193,15 @@ PUBLIC void vResetATimer(OS_thSWTimer hSWTimer, uint32 u32Ticks)
  ****************************************************************************/
 void clientOtaRestartDownload()
 {
+     g_sDevice.otaCurBlock   = 0;
+     g_sDevice.otaDownloading = 1;
     if (g_sDevice.otaTotalBytes == 0)
     {
         DBG_vPrintf(TRACE_EP, "otaTotalBytes info lost, cant restart download. \r\n");
         return;
     }
     // restart the downloading
-    g_sDevice.otaCurBlock   = 0;
-    g_sDevice.otaDownloading = 1;
+   
     DBG_vPrintf(TRACE_EP, "restart downloading... \r\n");
     PDM_vSaveRecord(&g_sDevicePDDesc);
 
@@ -206,6 +210,7 @@ void clientOtaRestartDownload()
 
     //start the ota task
     OS_eActivateTask(APP_taskOTAReq);
+    return;
 }
 
 
@@ -227,15 +232,17 @@ void clientOtaRestartDownload()
 void clientOtaFinishing()
 {
 #ifdef OTA_CLIENT
+    uint8 au8Values[OTA_MAGIC_NUM_LEN];
+    uint32 u32TotalImage = 0;
+    bool valid = true;
+    uint32 crc;
+    
     DBG_vPrintf(TRACE_EP, "OtaFinishing: get all %d blocks \r\n", g_sDevice.otaCurBlock);
     g_sDevice.otaDownloading = 0;
     PDM_vSaveRecord(&g_sDevicePDDesc);
 
     //verify the external flash image
-    uint8 au8Values[OTA_MAGIC_NUM_LEN];
-    uint32 u32TotalImage = 0;
-    bool valid = true;
-
+    
     //first, check external flash to detect image header
     APP_vOtaFlashLockRead(OTA_MAGIC_OFFSET, OTA_MAGIC_NUM_LEN, au8Values);
 
@@ -246,7 +253,8 @@ void clientOtaFinishing()
         //read the image length out
         APP_vOtaFlashLockRead(OTA_IMAGE_LEN_OFFSET, 4, (uint8 *)(&u32TotalImage));
 
-        if (u32TotalImage != g_sDevice.otaTotalBytes)
+        //if (u32TotalImage != g_sDevice.otaTotalBytes)
+        if (g_sDevice.otaTotalBytes != u32TotalImage)
         {
             DBG_vPrintf(TRACE_EP, "OtaFinishing: total length not match. \r\n");
             valid = false;
@@ -259,7 +267,7 @@ void clientOtaFinishing()
     }
 
     //second, check crc
-    uint32 crc = imageCrc(u32TotalImage);
+    crc = imageCrc(u32TotalImage);
     DBG_vPrintf(TRACE_EP, "OtaFinishing: verify crc: 0x%x \r\n", crc);
     if (crc != g_sDevice.otaCrc)
     {
@@ -309,15 +317,23 @@ void clientOtaFinishing()
  ****************************************************************************/
 bool sendToAir(uint16 txmode, uint16 unicastDest, tsApiFrame *apiFrame, teFrameType type, uint8 *buff, int len)
 {
+    uint16 frameLen;
+    uint8 *payload_addr = NULL;
+    tsApiFrame *apiFrameToAir = apiFrame;
+    uint8 *Databuffer = buff;
     PDUM_thAPduInstance hapdu_ins = PDUM_hAPduAllocateAPduInstance(apduZCL);
 
     if (hapdu_ins == PDUM_INVALID_HANDLE)
         return FALSE;
-
+    if((apiFrameToAir) && (Databuffer)){
     //assemble the packet
-    uint16 frameLen = assembleApiFrame(apiFrame, type, buff, len);
+    frameLen = assembleApiFrame(apiFrame, type, buff, len);
+    }
+    else{
+    	DBG_vPrintf(TRACE_EP, "Failed: assembleApiFrame \r\n");
+    }
     //copy packet into apdu
-    uint8 *payload_addr = PDUM_pvAPduInstanceGetPayload(hapdu_ins);
+    payload_addr = PDUM_pvAPduInstanceGetPayload(hapdu_ins);
     copyApiFrame(apiFrame, payload_addr);
     PDUM_eAPduInstanceSetPayloadSize(hapdu_ins, frameLen);
 
