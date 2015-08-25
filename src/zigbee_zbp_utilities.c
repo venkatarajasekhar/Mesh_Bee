@@ -93,11 +93,15 @@
  ****************************************************************************/
 PUBLIC void vDisplayTableSizes(void)
 {
-    ZPS_tsNwkNib * thisNib;
+    ZPS_tsNwkNib * thisNib = NULL;
 
     void * thisNet = ZPS_pvAplZdoGetNwkHandle();
+    if(thisNet){
     thisNib = ZPS_psNwkNibGetHandle(thisNet);
-
+    }
+    else{
+        DBG_vPrintf(TRACE_EP, "Failed:ZPS_pvAplZdoGetNwkHandle. \r\n");
+    }
     DBG_vPrintf(TRACE_ZBP_UTILS, "Address Map:Size: %d: Record %d: %d: Total: %d ",
                                 thisNib->sTblSize.u16AddrMap,
                                 10,
@@ -130,10 +134,10 @@ PUBLIC void vDisplayTableSizes(void)
 
 PUBLIC void vDisplayAddressMapTable(void)
 {
-    ZPS_tsNwkNib * thisNib;
-    thisNib = ZPS_psNwkNibGetHandle(ZPS_pvAplZdoGetNwkHandle());
-
     uint8 i = 0;
+    ZPS_tsNwkNib * thisNib = NULL;
+    
+    thisNib = ZPS_psNwkNibGetHandle(ZPS_pvAplZdoGetNwkHandle());
 
     DBG_vPrintf(TRACE_ZBP_UTILS,"\r\nAddress Map Size: %d", thisNib->sTblSize.u16AddrMap);
 
@@ -146,9 +150,10 @@ PUBLIC void vDisplayAddressMapTable(void)
 
 PUBLIC void vDisplayNT( void )
 {
+    uint8 i;
 ZPS_tsNwkNib * thisNib = ZPS_psNwkNibGetHandle(ZPS_pvAplZdoGetNwkHandle());
-uint8 i;
 
+    if(thisNib){
     DBG_vPrintf(TRACE_ZBP_UTILS, "\r\nNT Size: %d\r\n", thisNib->sTblSize.u16NtActv);
 
     for( i = 0 ; i < thisNib->sTblSize.u16NtActv ; i++ )
@@ -171,6 +176,10 @@ uint8 i;
                     thisNib->sTbl.psNtActv[i].uAncAttrs.bfBitfields.u3OutgoingCost
                     );
     }
+    }
+    else{
+        DBG_vPrintf(TRACE_EP, "Failed:ZPS_psNwkNibGetHandle :\r\n");
+    }
 }
 
 
@@ -190,7 +199,7 @@ PUBLIC void vDisplayAPSTable(void)
     uint8 i;
     int8 j;
 
-    ZPS_tsAplAib * tsAplAib;
+    ZPS_tsAplAib * tsAplAib =NULL;
 
     tsAplAib = ZPS_psAplAibGetAib();
 
